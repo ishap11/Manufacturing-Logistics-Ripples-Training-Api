@@ -1,0 +1,6 @@
+@Manufacturing_Logisitcs_Ripples_Training_Api_HostAddress = http://localhost:5091
+
+GET {{Manufacturing_Logisitcs_Ripples_Training_Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
