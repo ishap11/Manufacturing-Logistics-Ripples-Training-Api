@@ -17,9 +17,9 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             _repository = repository;
         }
 
-        private async Task<long> GetOrCreateStatusIdAsync(string status)
+        private async Task<long> GetOrCreateCatalogIdAsync(string catalogType, string catalogKey, string catalogValue)
         {
-            var catalog = await _repository.FindCatalogStatusAsync(status);
+            var catalog = await _repository.FindCatalogTypeAndKeyAsync(catalogType, catalogKey);
             if (catalog != null)
             {
                 return catalog.CatalogIdPk;
@@ -29,14 +29,40 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             var newCatalog = new Catalog
             {
                 CatalogIdPk = nextCatalogId,
-                CatalogType = "ReceivingStatus",
-                CatalogKey = status,
-                CatalogValue = status,
+                CatalogType = catalogType,
+                CatalogKey = catalogKey,
+                CatalogValue = catalogValue,
                 CreatedDateTime = DateTime.Now
             };
             _repository.AddCatalog(newCatalog);
             await _repository.SaveChangesAsync();
             return nextCatalogId;
+        }
+
+        private async Task<long> GetOrCreateStatusIdAsync(string status)
+        {
+            var catalog = await _repository.FindCatalogStatusAsync(status);
+            if (catalog != null)
+            {
+                return catalog.CatalogIdPk;
+            }
+
+            var key = status.ToUpper();
+            var value = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(status.ToLower());
+            return await GetOrCreateCatalogIdAsync("ReceivingStatus", key, value);
+        }
+
+        private async Task<long> GetOrCreateUomIdAsync(string uom)
+        {
+            var catalog = await _repository.FindCatalogUomAsync(uom);
+            if (catalog != null)
+            {
+                return catalog.CatalogIdPk;
+            }
+
+            var key = uom.ToUpper();
+            var value = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(uom.ToLower());
+            return await GetOrCreateCatalogIdAsync("UnitOfMeasurement", key, value);
         }
 
         public async Task<IEnumerable<WarehouseDto>> GetWarehousesAsync()
@@ -136,26 +162,39 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             foreach (var itemDto in receivingDto.Items)
             {
                 var product = await _repository.FindProductByNameAsync(itemDto.ProductName);
-                if (product != null)
+                if (product == null)
                 {
-                    int acceptedQty = 0;
-                    if (itemDto.QcStatus == "Passed")
+                    long nextProductId = await _repository.GetNextProductIdAsync();
+                    long uomId = await GetOrCreateUomIdAsync("PCS");
+                    product = new Product
                     {
-                        acceptedQty = itemDto.ReceivedQty - itemDto.DamagedQty;
-                    }
-
-                    var itemModel = new DcReceivingItem
-                    {
-                        DcReceivingItemsIdPk = itemNextId++,
-                        DcReceivingIdFk = nextId,
-                        ProductIdFk = product.ProductIdPk,
-                        ReceivedQuantity = itemDto.ReceivedQty,
-                        DamagedQuantity = itemDto.DamagedQty,
-                        AcceptedQuantity = acceptedQty,
+                        ProductIdPk = nextProductId,
+                        ProductName = itemDto.ProductName,
+                        UnitOfMeasurementIdFk = uomId,
+                        ProductStatusIdFk = await GetOrCreateCatalogIdAsync("ProductStatus", "ACTIVE", "Active"),
                         CreatedDateTime = DateTime.Now
                     };
-                    _repository.AddReceivingItem(itemModel);
+                    _repository.AddProduct(product);
+                    await _repository.SaveChangesAsync();
                 }
+
+                int acceptedQty = 0;
+                if (itemDto.QcStatus == "Passed")
+                {
+                    acceptedQty = itemDto.ReceivedQty - itemDto.DamagedQty;
+                }
+
+                var itemModel = new DcReceivingItem
+                {
+                    DcReceivingItemsIdPk = itemNextId++,
+                    DcReceivingIdFk = nextId,
+                    ProductIdFk = product.ProductIdPk,
+                    ReceivedQuantity = itemDto.ReceivedQty,
+                    DamagedQuantity = itemDto.DamagedQty,
+                    AcceptedQuantity = acceptedQty,
+                    CreatedDateTime = DateTime.Now
+                };
+                _repository.AddReceivingItem(itemModel);
             }
 
             await _repository.SaveChangesAsync();
@@ -187,26 +226,39 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             foreach (var itemDto in receivingDto.Items)
             {
                 var product = await _repository.FindProductByNameAsync(itemDto.ProductName);
-                if (product != null)
+                if (product == null)
                 {
-                    int acceptedQty = 0;
-                    if (itemDto.QcStatus == "Passed")
+                    long nextProductId = await _repository.GetNextProductIdAsync();
+                    long uomId = await GetOrCreateUomIdAsync("PCS");
+                    product = new Product
                     {
-                        acceptedQty = itemDto.ReceivedQty - itemDto.DamagedQty;
-                    }
-
-                    var itemModel = new DcReceivingItem
-                    {
-                        DcReceivingItemsIdPk = itemNextId++,
-                        DcReceivingIdFk = id,
-                        ProductIdFk = product.ProductIdPk,
-                        ReceivedQuantity = itemDto.ReceivedQty,
-                        DamagedQuantity = itemDto.DamagedQty,
-                        AcceptedQuantity = acceptedQty,
-                        UpdatedDateTime = DateTime.Now
+                        ProductIdPk = nextProductId,
+                        ProductName = itemDto.ProductName,
+                        UnitOfMeasurementIdFk = uomId,
+                        ProductStatusIdFk = await GetOrCreateCatalogIdAsync("ProductStatus", "ACTIVE", "Active"),
+                        CreatedDateTime = DateTime.Now
                     };
-                    _repository.AddReceivingItem(itemModel);
+                    _repository.AddProduct(product);
+                    await _repository.SaveChangesAsync();
                 }
+
+                int acceptedQty = 0;
+                if (itemDto.QcStatus == "Passed")
+                {
+                    acceptedQty = itemDto.ReceivedQty - itemDto.DamagedQty;
+                }
+
+                var itemModel = new DcReceivingItem
+                {
+                    DcReceivingItemsIdPk = itemNextId++,
+                    DcReceivingIdFk = id,
+                    ProductIdFk = product.ProductIdPk,
+                    ReceivedQuantity = itemDto.ReceivedQty,
+                    DamagedQuantity = itemDto.DamagedQty,
+                    AcceptedQuantity = acceptedQty,
+                    UpdatedDateTime = DateTime.Now
+                };
+                _repository.AddReceivingItem(itemModel);
             }
 
             await _repository.SaveChangesAsync();
@@ -240,7 +292,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
                 Warehouse = warehouseName,
                 TotalProducts = r.DcReceivingItems.Count,
                 TotalQuantity = r.DcReceivingItems.Sum(ri => ri.ReceivedQuantity),
-                Status = r.ReceivingStatus?.CatalogKey ?? "Completed",
+                Status = r.ReceivingStatus?.CatalogKey ?? "COMPLETED",
                 CreatedDate = (r.CreatedDateTime ?? DateTime.Now).ToString("dd-MMM-yyyy"),
                 Items = new List<ReceivingItemDto>()
             };
@@ -314,13 +366,53 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             if (shipment == null)
             {
                 long nextShipmentId = await _repository.GetNextShipmentIdAsync();
+
+                // Resolve Carrier ID
+                var carrierName = "DHL Express";
+                var carrier = await _repository.FindCarrierByNameAsync(carrierName);
+                if (carrier == null)
+                {
+                    long nextCarrierId = await _repository.GetNextCarrierIdAsync();
+                    carrier = new Carriers
+                    {
+                        CarrierIdPk = nextCarrierId,
+                        CarrierName = carrierName,
+                        CreatedDateTime = DateTime.Now
+                    };
+                    _repository.AddCarrier(carrier);
+                    await _repository.SaveChangesAsync();
+                }
+
+                // Resolve Purchase Order
+                long poId = 1;
+                var po = await _repository.FindPurchaseOrderByIdAsync(poId);
+                if (po == null)
+                {
+                    long nextPoId = await _repository.GetNextPurchaseOrderIdAsync();
+                    po = new PurchaseOrder
+                    {
+                        PurchaseOrderIdPk = nextPoId,
+                        PoDate = DateTime.Now.AddDays(-7),
+                        ExpectedDeliveryDate = DateTime.Now.AddDays(3),
+                        OrderStatusIdFk = await GetOrCreateCatalogIdAsync("OrderStatus", "APPROVED", "Approved"),
+                        CurrencyIdFk = await GetOrCreateCatalogIdAsync("Currency", "USD", "USD"),
+                        CreatedDateTime = DateTime.Now
+                    };
+                    _repository.AddPurchaseOrder(po);
+                    await _repository.SaveChangesAsync();
+                    poId = nextPoId;
+                }
+
+                long shipmentStatusId = await GetOrCreateCatalogIdAsync("ShipmentStatus", "INTRANSIT", "In Transit");
+                long transportModeId = await GetOrCreateCatalogIdAsync("TransportMode", "ROAD", "Road");
+
                 shipment = new Shipment
                 {
                     ShipmentIdPk = nextShipmentId,
-                    PurchaseOrderIdFk = 1,
-                    ShipmentStatusIdFk = 1,
-                    TransportModeIdFk = 1,
-                    CarrierIdFk = 1,
+                    PurchaseOrderIdFk = poId,
+                    ShipmentStatusIdFk = shipmentStatusId,
+                    TransportModeIdFk = transportModeId,
+                    CarrierIdFk = carrier.CarrierIdPk,
                     TrackingNumber = shipmentStr,
                     DispatchDate = DateTime.Now.AddDays(-2),
                     EstimatedArrival = DateTime.Now.AddDays(2),
