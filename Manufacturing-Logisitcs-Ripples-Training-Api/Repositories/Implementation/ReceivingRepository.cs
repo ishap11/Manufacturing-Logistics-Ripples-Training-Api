@@ -89,7 +89,25 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementati
         public async Task<Catalog?> FindCatalogStatusAsync(string status)
         {
             return await _context.Catalogs
-                .FirstOrDefaultAsync(c => c.CatalogType == "ReceivingStatus" && c.CatalogKey == status);
+                .FirstOrDefaultAsync(c => 
+                    (c.CatalogType.ToLower() == "receivingstatus" || c.CatalogType.ToLower() == "status" || c.CatalogType.ToLower() == "receiving_status" || c.CatalogType.ToLower() == "receiving status") && 
+                    (c.CatalogKey.ToLower() == status.ToLower() || c.CatalogValue.ToLower() == status.ToLower())
+                );
+        }
+
+        public async Task<Catalog?> FindCatalogUomAsync(string uom)
+        {
+            return await _context.Catalogs
+                .FirstOrDefaultAsync(c => 
+                    (c.CatalogType.ToLower() == "unitofmeasurement" || c.CatalogType.ToLower() == "uom" || c.CatalogType.ToLower() == "unit_of_measurement" || c.CatalogType.ToLower() == "unit of measurement") && 
+                    (c.CatalogKey.ToLower() == uom.ToLower() || c.CatalogValue.ToLower() == uom.ToLower())
+                );
+        }
+
+        public async Task<Catalog?> FindCatalogTypeAndKeyAsync(string catalogType, string catalogKey)
+        {
+            return await _context.Catalogs
+                .FirstOrDefaultAsync(c => c.CatalogType.ToLower() == catalogType.ToLower() && c.CatalogKey.ToLower() == catalogKey.ToLower());
         }
 
         public async Task<Product?> FindProductByNameAsync(string name)
@@ -129,6 +147,31 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementati
             return await GetNextIdInternalAsync<Shipment>(s => s.ShipmentIdPk);
         }
 
+        public async Task<long> GetNextProductIdAsync()
+        {
+            return await GetNextIdInternalAsync<Product>(p => p.ProductIdPk);
+        }
+
+        public async Task<long> GetNextCarrierIdAsync()
+        {
+            return await GetNextIdInternalAsync<Carriers>(c => c.CarrierIdPk);
+        }
+
+        public async Task<long> GetNextPurchaseOrderIdAsync()
+        {
+            return await GetNextIdInternalAsync<PurchaseOrder>(p => p.PurchaseOrderIdPk);
+        }
+
+        public async Task<Carriers?> FindCarrierByNameAsync(string name)
+        {
+            return await _context.Carriers.FirstOrDefaultAsync(c => c.CarrierName == name);
+        }
+
+        public async Task<PurchaseOrder?> FindPurchaseOrderByIdAsync(long id)
+        {
+            return await _context.PurchaseOrders.FindAsync(id);
+        }
+
         public void AddReceiving(DcReceiving receiving)
         {
             _context.DcReceivings.Add(receiving);
@@ -162,6 +205,21 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementati
         public void AddShipment(Shipment shipment)
         {
             _context.Shipments.Add(shipment);
+        }
+
+        public void AddProduct(Product product)
+        {
+            _context.Products.Add(product);
+        }
+
+        public void AddCarrier(Carriers carrier)
+        {
+            _context.Carriers.Add(carrier);
+        }
+
+        public void AddPurchaseOrder(PurchaseOrder po)
+        {
+            _context.PurchaseOrders.Add(po);
         }
 
         public async Task SaveChangesAsync()
