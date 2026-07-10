@@ -8,8 +8,8 @@ using Manufacturing_Logisitcs_Ripples_Training_Api.Repositories;
 
 namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
 {
-    public class ReceivingService : IReceivingService
-    {
+    public class ReceivingService// : IReceivingService
+    {/*
         private readonly IReceivingRepository _repository;
 
         public ReceivingService(IReceivingRepository repository)
@@ -332,6 +332,6 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
                 await _repository.SaveChangesAsync();
             }
             return shipment;
-        }
+        }*/
     }
 }

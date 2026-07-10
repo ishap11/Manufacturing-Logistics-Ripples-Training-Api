@@ -8,8 +8,8 @@ using Manufacturing_Logisitcs_Ripples_Training_Api.Models;
 
 namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementation
 {
-    public class ReceivingRepository : IReceivingRepository
-    {
+    public class ReceivingRepository// : IReceivingRepository
+    {/*
         private readonly ManufacturingLogisticsDbContext _context;
 
         public ReceivingRepository(ManufacturingLogisticsDbContext context)
@@ -167,6 +167,6 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementati
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
-        }
+        }*/
     }
 }

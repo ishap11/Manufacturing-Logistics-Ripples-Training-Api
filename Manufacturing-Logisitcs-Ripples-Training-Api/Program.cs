@@ -1,18 +1,22 @@
-using Microsoft.EntityFrameworkCore;
+using Manufacturing_Logisitcs_Ripples_Training_Api.Facade;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Models;
-using Manufacturing_Logisitcs_Ripples_Training_Api.Services;
-using Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Repositories;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementation;
+using Manufacturing_Logisitcs_Ripples_Training_Api.Services;
+using Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<ManufacturingLogisticsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IReceivingRepository, ReceivingRepository>();
-builder.Services.AddScoped<IReceivingService, ReceivingService>();
+//builder.Services.AddScoped<IReceivingRepository, ReceivingRepository>();
+//builder.Services.AddScoped<IReceivingService, ReceivingService>();
+builder.Services.AddScoped<IProcurementOrderManagementRepository, ProcurementOrderManagementRepository>();
+builder.Services.AddScoped<ProcurementOrderManagementService>();
+builder.Services.AddScoped<ProcurementOrderManagementFacade>();
 
 builder.Services.AddCors(options =>
 {
