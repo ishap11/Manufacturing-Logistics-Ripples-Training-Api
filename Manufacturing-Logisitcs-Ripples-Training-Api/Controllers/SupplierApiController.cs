@@ -245,6 +245,90 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("FetchAllSupplierTypes")]
+        public async Task<IActionResult> FetchAllSupplierTypes()
+        {
+            try
+            {
+                var result = await _facade.FetchAllSupplierTypesAsync();
+                return Ok(new ApiResponse<IEnumerable<string>>
+                {
+                    Success = true,
+                    Message = "Supplier types retrieved successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while fetching supplier types.");
+                return StatusCode(500, new ApiResponse<object> { Success = false, Message = "An unexpected error occurred." });
+            }
+        }
+
+        [HttpGet]
+        [Route("FetchAllCountries")]
+        public async Task<IActionResult> FetchAllCountries()
+        {
+            try
+            {
+                var result = await _facade.FetchAllCountriesAsync();
+                return Ok(new ApiResponse<IEnumerable<string>>
+                {
+                    Success = true,
+                    Message = "Countries retrieved successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while fetching countries.");
+                return StatusCode(500, new ApiResponse<object> { Success = false, Message = "An unexpected error occurred." });
+            }
+        }
+
+        [HttpGet]
+        [Route("FetchStatesByCountry")]
+        public async Task<IActionResult> FetchStatesByCountry([FromQuery] string countryName)
+        {
+            try
+            {
+                var result = await _facade.FetchStatesByCountryAsync(countryName);
+                return Ok(new ApiResponse<IEnumerable<string>>
+                {
+                    Success = true,
+                    Message = "States retrieved successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while fetching states.");
+                return StatusCode(500, new ApiResponse<object> { Success = false, Message = "An unexpected error occurred." });
+            }
+        }
+
+        [HttpGet]
+        [Route("FetchCitiesByState")]
+        public async Task<IActionResult> FetchCitiesByState([FromQuery] string stateName)
+        {
+            try
+            {
+                var result = await _facade.FetchCitiesByStateAsync(stateName);
+                return Ok(new ApiResponse<IEnumerable<string>>
+                {
+                    Success = true,
+                    Message = "Cities retrieved successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while fetching cities.");
+                return StatusCode(500, new ApiResponse<object> { Success = false, Message = "An unexpected error occurred." });
+            }
+        }
+
         private Dictionary<string, string[]> GetModelStateErrors()
         {
             return ModelState

@@ -83,5 +83,25 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Facade
                 throw;
             }
         }
+
+        public async Task<IEnumerable<string>> FetchAllSupplierTypesAsync()
+        {
+            return await _supplierService.FetchAllSupplierTypesAsync();
+        }
+
+        public async Task<IEnumerable<string>> FetchAllCountriesAsync()
+        {
+            return await _supplierService.FetchAllCountriesAsync();
+        }
+
+        public async Task<IEnumerable<string>> FetchStatesByCountryAsync(string countryName)
+        {
+            return await _supplierService.FetchStatesByCountryAsync(countryName);
+        }
+
+        public async Task<IEnumerable<string>> FetchCitiesByStateAsync(string stateName)
+        {
+            return await _supplierService.FetchCitiesByStateAsync(stateName);
+        }
     }
 }

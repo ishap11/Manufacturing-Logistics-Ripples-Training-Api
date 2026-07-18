@@ -358,5 +358,33 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
                 Pincode = pincode
             };
         }
+
+        public async Task<IEnumerable<string>> FetchAllSupplierTypesAsync()
+        {
+            return await _repository.FetchAllSupplierTypesAsync();
+        }
+
+        public async Task<IEnumerable<string>> FetchAllCountriesAsync()
+        {
+            return await _repository.FetchAllCountriesAsync();
+        }
+
+        public async Task<IEnumerable<string>> FetchStatesByCountryAsync(string countryName)
+        {
+            if (string.IsNullOrWhiteSpace(countryName))
+            {
+                return Enumerable.Empty<string>();
+            }
+            return await _repository.FetchStatesByCountryAsync(countryName);
+        }
+
+        public async Task<IEnumerable<string>> FetchCitiesByStateAsync(string stateName)
+        {
+            if (string.IsNullOrWhiteSpace(stateName))
+            {
+                return Enumerable.Empty<string>();
+            }
+            return await _repository.FetchCitiesByStateAsync(stateName);
+        }
     }
 }

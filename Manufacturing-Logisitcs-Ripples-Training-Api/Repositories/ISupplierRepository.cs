@@ -29,5 +29,10 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories
         Task<long> GetNextCountryIdAsync();
         Task<long> GetNextStateIdAsync();
         Task<long> GetNextCityIdAsync();
+
+        Task<IEnumerable<string>> FetchAllSupplierTypesAsync();
+        Task<IEnumerable<string>> FetchAllCountriesAsync();
+        Task<IEnumerable<string>> FetchStatesByCountryAsync(string countryName);
+        Task<IEnumerable<string>> FetchCitiesByStateAsync(string stateName);
     }
 }

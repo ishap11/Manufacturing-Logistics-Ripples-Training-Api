@@ -11,5 +11,9 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services
         Task<SupplierResponseDto> AddSupplierAsync(SupplierCreateDto dto);
         Task<SupplierResponseDto> UpdateSupplierAsync(SupplierUpdateDto dto);
         Task<IEnumerable<SupplierDetailsDto>> FetchSupplierWithCityNameAsync(string cityName);
+        Task<IEnumerable<string>> FetchAllSupplierTypesAsync();
+        Task<IEnumerable<string>> FetchAllCountriesAsync();
+        Task<IEnumerable<string>> FetchStatesByCountryAsync(string countryName);
+        Task<IEnumerable<string>> FetchCitiesByStateAsync(string stateName);
     }
 }

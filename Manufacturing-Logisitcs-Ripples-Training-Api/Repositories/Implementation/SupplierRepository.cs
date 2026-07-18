@@ -225,5 +225,45 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementati
             if (!any) return 1;
             return await _context.Cities.MaxAsync(c => c.CityIdPk) + 1;
         }
+
+        public async Task<IEnumerable<string>> FetchAllSupplierTypesAsync()
+        {
+            return await _context.SupplierTypes
+                .Where(st => st.SupplierTypeName != null)
+                .Select(st => st.SupplierTypeName!)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<string>> FetchAllCountriesAsync()
+        {
+            return await _context.Countries
+                .Where(c => c.CountryName != null)
+                .Select(c => c.CountryName!)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<string>> FetchStatesByCountryAsync(string countryName)
+        {
+            var cleanCountryName = countryName.Trim().ToLower();
+            return await _context.States
+                .Include(s => s.Country)
+                .Where(s => s.Country != null && s.Country.CountryName != null && s.Country.CountryName.Trim().ToLower() == cleanCountryName && s.StateName != null)
+                .Select(s => s.StateName!)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<string>> FetchCitiesByStateAsync(string stateName)
+        {
+            var cleanStateName = stateName.Trim().ToLower();
+            return await _context.Cities
+                .Include(c => c.State)
+                .Where(c => c.State != null && c.State.StateName != null && c.State.StateName.Trim().ToLower() == cleanStateName && c.CityName != null)
+                .Select(c => c.CityName!)
+                .Distinct()
+                .ToListAsync();
+        }
     }
 }
