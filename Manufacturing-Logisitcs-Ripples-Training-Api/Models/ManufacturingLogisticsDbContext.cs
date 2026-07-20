@@ -292,34 +292,25 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Models
             modelBuilder.Entity<Suppliers>(entity =>
             {
                 entity.ToTable("Suppliers");
-                entity.HasKey(e => e.SupplierIdPk);
-                entity.Property(e => e.SupplierIdPk).HasColumnName("Supplier_ID_Pk");
-                entity.Property(e => e.SupplierName).HasColumnName("Supplier_Name").HasMaxLength(150);
-                entity.Property(e => e.SupplierTypeIdFk).HasColumnName("Supplier_Type_Id_Fk");
-                entity.Property(e => e.CurrencyIdFk).HasColumnName("Currency_Id_Fk");
-                entity.Property(e => e.GstNumber).HasColumnName("GST_Number");
-                entity.Property(e => e.ManagersIdFk).HasColumnName("Managers_Id_Fk");
-                entity.Property(e => e.SupplierStatusIdFk).HasColumnName("Supplier_Status_Id_Fk");
-                entity.Property(e => e.CreatedDateTime).HasColumnName("Created_DateTime");
-                entity.Property(e => e.UpdatedDateTime).HasColumnName("Updated_DateTime");
-                entity.Property(e => e.CreatedByUserIdFk).HasColumnName("Created_By_User_Id_Fk");
-                entity.Property(e => e.UpdatedByUserIdFk).HasColumnName("Updated_By_User_Id_Fk");
+                entity.HasKey(e => e.SupplierId);
+                entity.Property(e => e.SupplierId).HasColumnName("Supplier_ID");
+                entity.Property(e => e.CompanyName).HasColumnName("Company_Name").HasMaxLength(100).IsRequired();
+                entity.Property(e => e.ContactPerson).HasColumnName("Contact_Person").HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Age).HasColumnName("Age").IsRequired();
+                entity.Property(e => e.PhoneNumber).HasColumnName("Phone_Number").HasMaxLength(20).IsRequired();
+                entity.Property(e => e.Email).HasColumnName("Email").HasMaxLength(100).IsRequired();
+                entity.Property(e => e.SupplierTypeId).HasColumnName("Supplier_Type_Id").IsRequired();
+                entity.Property(e => e.AddressId).HasColumnName("Address_Id").IsRequired();
+                entity.Property(e => e.CreatedDate).HasColumnName("Created_Date").IsRequired();
+                entity.Property(e => e.UpdatedDate).HasColumnName("Updated_Date").IsRequired();
 
                 entity.HasOne(d => d.SupplierType)
                     .WithMany()
-                    .HasForeignKey(d => d.SupplierTypeIdFk);
+                    .HasForeignKey(d => d.SupplierTypeId);
 
-                entity.HasOne(d => d.Currency)
+                entity.HasOne(d => d.Address)
                     .WithMany()
-                    .HasForeignKey(d => d.CurrencyIdFk);
-
-                entity.HasOne(d => d.Manager)
-                    .WithMany()
-                    .HasForeignKey(d => d.ManagersIdFk);
-
-                entity.HasOne(d => d.SupplierStatus)
-                    .WithMany()
-                    .HasForeignKey(d => d.SupplierStatusIdFk);
+                    .HasForeignKey(d => d.AddressId);
             });
 
             // SupplierProductRate
