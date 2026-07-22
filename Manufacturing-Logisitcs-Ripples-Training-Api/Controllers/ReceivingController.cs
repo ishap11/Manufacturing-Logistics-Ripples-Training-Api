@@ -20,124 +20,92 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Controllers
         [HttpGet("warehouses")]
         public async Task<ActionResult<IEnumerable<WarehouseDto>>> GetWarehouses()
         {
-            try
-            {
-                var warehouses = await _receivingService.GetWarehousesAsync();
-                return Ok(warehouses);
-            }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
-            }
+            var warehouses = await _receivingService.GetWarehousesAsync();
+            return Ok(warehouses);
         }
 
         [HttpGet("shipments")]
         public async Task<ActionResult<IEnumerable<ShipmentDto>>> GetShipments()
         {
-            try
-            {
-                var shipments = await _receivingService.GetShipmentsAsync();
-                return Ok(shipments);
-            }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
-            }
+            var shipments = await _receivingService.GetShipmentsAsync();
+            return Ok(shipments);
+        }
+
+        [HttpGet("products")]
+        public async Task<ActionResult<IEnumerable<AvailableProductDto>>> GetProducts()
+        {
+            var products = await _receivingService.GetProductsAsync();
+            return Ok(products);
+        }
+
+        [HttpGet("receiving-statuses")]
+        public async Task<ActionResult<IEnumerable<string>>> GetReceivingStatuses()
+        {
+            var statuses = await _receivingService.GetReceivingStatusesAsync();
+            return Ok(statuses);
+        }
+
+        [HttpGet("qc-statuses")]
+        public async Task<ActionResult<IEnumerable<string>>> GetQcStatuses()
+        {
+            var statuses = await _receivingService.GetQcStatusesAsync();
+            return Ok(statuses);
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ReceivingDto>>> GetAll([FromQuery] string? search, [FromQuery] string? status)
         {
-            try
+            if (!string.IsNullOrEmpty(status))
             {
-                if (!string.IsNullOrEmpty(status))
-                {
-                    var result = await _receivingService.GetReceivingByStatusAsync(status);
-                    return Ok(result);
-                }
-                var list = await _receivingService.SearchReceivingAsync(search);
-                return Ok(list);
+                var result = await _receivingService.GetReceivingByStatusAsync(status);
+                return Ok(result);
             }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
-            }
+            var list = await _receivingService.SearchReceivingAsync(search);
+            return Ok(list);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ReceivingDto>> GetById(string id)
         {
-            try
+            var record = await _receivingService.GetReceivingByIdAsync(id);
+            if (record == null)
             {
-                var record = await _receivingService.GetReceivingByIdAsync(id);
-                if (record == null)
-                {
-                    return NotFound();
-                }
-                return Ok(record);
+                return NotFound();
             }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
-            }
+            return Ok(record);
         }
 
         [HttpPost]
         public async Task<ActionResult<ReceivingDto>> Create([FromBody] ReceivingDto dto)
         {
-            try
+            if (dto == null)
             {
-                if (dto == null)
-                {
-                    return BadRequest("Invalid payload");
-                }
-                var result = await _receivingService.AddReceivingAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = result.ReceivingId }, result);
+                return BadRequest("Invalid payload");
             }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
-            }
+            var result = await _receivingService.AddReceivingAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.ReceivingId }, result);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<ReceivingDto>> Update(string id, [FromBody] ReceivingDto dto)
         {
-            try
+            if (dto == null || id != dto.ReceivingId)
             {
-                if (dto == null || id != dto.ReceivingId)
-                {
-                    return BadRequest("Mismatched ID");
-                }
-                var result = await _receivingService.UpdateReceivingAsync(dto);
-                return Ok(result);
+                return BadRequest("Mismatched ID");
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
-            }
+            var result = await _receivingService.UpdateReceivingAsync(dto);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
-            try
+            var deleted = await _receivingService.DeleteReceivingAsync(id);
+            if (!deleted)
             {
-                var deleted = await _receivingService.DeleteReceivingAsync(id);
-                if (!deleted)
-                {
-                    return NotFound();
-                }
-                return NoContent();
+                return NotFound();
             }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message, detail = ex.ToString() });
-            }
+            return NoContent();
         }
     }
 }

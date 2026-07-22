@@ -4,6 +4,7 @@ using Manufacturing_Logisitcs_Ripples_Training_Api.Repositories;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementation;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Services;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation;
+using Manufacturing_Logisitcs_Ripples_Training_Api.GlobalExceptions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,6 +51,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

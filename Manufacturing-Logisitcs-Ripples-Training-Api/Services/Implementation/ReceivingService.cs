@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Manufacturing_Logisitcs_Ripples_Training_Api.DTOs;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Models;
 using Manufacturing_Logisitcs_Ripples_Training_Api.Repositories;
+using Manufacturing_Logisitcs_Ripples_Training_Api.GlobalExceptions;
 
 namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
 {
@@ -95,6 +96,28 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             });
         }
 
+        public async Task<IEnumerable<AvailableProductDto>> GetProductsAsync()
+        {
+            var products = await _repository.GetProductsAsync();
+            return products.Select(p => new AvailableProductDto
+            {
+                Id   = $"PRD-{p.ProductIdPk:D3}",
+                Name = p.ProductName!
+            });
+        }
+
+        public async Task<IEnumerable<string>> GetReceivingStatusesAsync()
+        {
+            var catalogs = await _repository.GetCatalogsByTypeAsync("ReceivingStatus");
+            return catalogs.Select(c => c.CatalogValue ?? c.CatalogKey ?? "Unknown");
+        }
+
+        public async Task<IEnumerable<string>> GetQcStatusesAsync()
+        {
+            var catalogs = await _repository.GetCatalogsByTypeAsync("QcStatus");
+            return catalogs.Select(c => c.CatalogValue ?? c.CatalogKey ?? "Unknown");
+        }
+
         public async Task<IEnumerable<ReceivingDto>> SearchReceivingAsync(string? keyword)
         {
             var receivings = await _repository.GetAllReceivingAsync();
@@ -139,6 +162,8 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
 
         public async Task<ReceivingDto> AddReceivingAsync(ReceivingDto receivingDto)
         {
+            ValidateReceiving(receivingDto);
+
             long nextId = await _repository.GetNextReceivingIdAsync();
 
             var dc = await ResolveDcAsync(receivingDto.Warehouse);
@@ -161,22 +186,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             long itemNextId = await _repository.GetNextReceivingItemIdAsync();
             foreach (var itemDto in receivingDto.Items)
             {
-                var product = await _repository.FindProductByNameAsync(itemDto.ProductName);
-                if (product == null)
-                {
-                    long nextProductId = await _repository.GetNextProductIdAsync();
-                    long uomId = await GetOrCreateUomIdAsync("PCS");
-                    product = new Product
-                    {
-                        ProductIdPk = nextProductId,
-                        ProductName = itemDto.ProductName,
-                        UnitOfMeasurementIdFk = uomId,
-                        ProductStatusIdFk = await GetOrCreateCatalogIdAsync("ProductStatus", "ACTIVE", "Active"),
-                        CreatedDateTime = DateTime.Now
-                    };
-                    _repository.AddProduct(product);
-                    await _repository.SaveChangesAsync();
-                }
+                var product = await ResolveProductAsync(itemDto.ProductId);
 
                 int acceptedQty = 0;
                 if (itemDto.QcStatus == "Passed")
@@ -205,6 +215,8 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
 
         public async Task<ReceivingDto> UpdateReceivingAsync(ReceivingDto receivingDto)
         {
+            ValidateReceiving(receivingDto);
+
             long id = ParseReceivingId(receivingDto.ReceivingId);
             var model = await _repository.GetReceivingByIdAsync(id);
 
@@ -225,22 +237,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             long itemNextId = await _repository.GetNextReceivingItemIdAsync();
             foreach (var itemDto in receivingDto.Items)
             {
-                var product = await _repository.FindProductByNameAsync(itemDto.ProductName);
-                if (product == null)
-                {
-                    long nextProductId = await _repository.GetNextProductIdAsync();
-                    long uomId = await GetOrCreateUomIdAsync("PCS");
-                    product = new Product
-                    {
-                        ProductIdPk = nextProductId,
-                        ProductName = itemDto.ProductName,
-                        UnitOfMeasurementIdFk = uomId,
-                        ProductStatusIdFk = await GetOrCreateCatalogIdAsync("ProductStatus", "ACTIVE", "Active"),
-                        CreatedDateTime = DateTime.Now
-                    };
-                    _repository.AddProduct(product);
-                    await _repository.SaveChangesAsync();
-                }
+                var product = await ResolveProductAsync(itemDto.ProductId);
 
                 int acceptedQty = 0;
                 if (itemDto.QcStatus == "Passed")
@@ -289,7 +286,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             {
                 ReceivingId = $"RCV-{r.DcReceivingIdPk:D4}",
                 Shipment = shipmentCode,
-                Warehouse = warehouseName,
+                Warehouse = $"IDC-00{r.DcIdFk}",
                 TotalProducts = r.DcReceivingItems.Count,
                 TotalQuantity = r.DcReceivingItems.Sum(ri => ri.ReceivedQuantity),
                 Status = r.ReceivingStatus?.CatalogKey ?? "COMPLETED",
@@ -321,6 +318,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
 
                 dto.Items.Add(new ReceivingItemDto
                 {
+                    ProductId = $"PRD-{ri.ProductIdFk:D3}",
                     ProductName = ri.Product?.ProductName ?? "Unknown Product",
                     OrderedQty = orderedQty,
                     ReceivedQty = ri.ReceivedQuantity,
@@ -343,21 +341,37 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
 
         private async Task<DC> ResolveDcAsync(string warehouseStr)
         {
+            if (string.IsNullOrWhiteSpace(warehouseStr) || !warehouseStr.StartsWith("IDC-", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new GlobalException("Warehouse must be a valid code starting with IDC- (e.g., IDC-001). Name is not accepted.");
+            }
+
             var dc = await _repository.FindDcByNameOrIdAsync(warehouseStr);
             if (dc == null)
             {
-                long nextDcId = await _repository.GetNextDcIdAsync();
-                dc = new DC
-                {
-                    DCIdPk = nextDcId,
-                    DCName = warehouseStr,
-                    DCAddressIdFk = 1,
-                    CreatedDateTime = DateTime.Now
-                };
-                _repository.AddDc(dc);
-                await _repository.SaveChangesAsync();
+                throw new GlobalException($"Warehouse with code '{warehouseStr}' does not exist.");
             }
             return dc;
+        }
+
+        private async Task<Product> ResolveProductAsync(string productIdStr)
+        {
+            if (string.IsNullOrWhiteSpace(productIdStr) || !productIdStr.StartsWith("PRD-", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new GlobalException("Product ID must be a valid code starting with PRD- (e.g., PRD-001). Name is not accepted.");
+            }
+
+            if (!long.TryParse(productIdStr.Substring(4), out long id))
+            {
+                throw new GlobalException($"Invalid Product ID format: '{productIdStr}'.");
+            }
+
+            var product = await _repository.FindProductByIdAsync(id);
+            if (product == null)
+            {
+                throw new GlobalException($"Product with ID '{productIdStr}' does not exist in the database.");
+            }
+            return product;
         }
 
         private async Task<Shipment> ResolveShipmentAsync(string shipmentStr)
@@ -424,6 +438,58 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
                 await _repository.SaveChangesAsync();
             }
             return shipment;
+        }
+
+        private void ValidateReceiving(ReceivingDto receivingDto)
+        {
+            if (receivingDto == null)
+            {
+                throw new GlobalException("Receiving payload cannot be null.");
+            }
+            if (string.IsNullOrWhiteSpace(receivingDto.Warehouse))
+            {
+                throw new GlobalException("Warehouse/DC is required.");
+            }
+            if (!receivingDto.Warehouse.StartsWith("IDC-", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new GlobalException("Warehouse must be a valid code starting with IDC- (e.g., IDC-001). Name is not accepted.");
+            }
+            if (string.IsNullOrWhiteSpace(receivingDto.Shipment))
+            {
+                throw new GlobalException("Shipment tracking number is required.");
+            }
+            if (receivingDto.Items == null || receivingDto.Items.Count == 0)
+            {
+                throw new GlobalException("At least one product item is required for receiving.");
+            }
+
+            foreach (var item in receivingDto.Items)
+            {
+                if (string.IsNullOrWhiteSpace(item.ProductId))
+                {
+                    throw new GlobalException("Product ID is required.");
+                }
+                var productIdentifier = !string.IsNullOrWhiteSpace(item.ProductName) 
+                    ? $"{item.ProductId} ({item.ProductName})" 
+                    : item.ProductId;
+
+                if (item.ReceivedQty < 0)
+                {
+                    throw new GlobalException($"Received quantity for product '{productIdentifier}' cannot be negative.");
+                }
+                if (item.DamagedQty < 0)
+                {
+                    throw new GlobalException($"Damaged quantity for product '{productIdentifier}' cannot be negative.");
+                }
+                if (item.DamagedQty > item.ReceivedQty)
+                {
+                    throw new GlobalException($"Damaged quantity ({item.DamagedQty}) cannot exceed received quantity ({item.ReceivedQty}) for product '{productIdentifier}'.");
+                }
+                if (item.ReceivedQty > item.OrderedQty)
+                {
+                    throw new GlobalException($"Received quantity ({item.ReceivedQty}) cannot exceed ordered quantity ({item.OrderedQty}) for product '{productIdentifier}'.");
+                }
+            }
         }
     }
 }

@@ -8,6 +8,9 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services
     {
         Task<IEnumerable<WarehouseDto>> GetWarehousesAsync();
         Task<IEnumerable<ShipmentDto>> GetShipmentsAsync();
+        Task<IEnumerable<AvailableProductDto>> GetProductsAsync();
+        Task<IEnumerable<string>> GetReceivingStatusesAsync();
+        Task<IEnumerable<string>> GetQcStatusesAsync();
         Task<IEnumerable<ReceivingDto>> SearchReceivingAsync(string? keyword);
         Task<IEnumerable<ReceivingDto>> GetReceivingByStatusAsync(string status);
         Task<ReceivingDto?> GetReceivingByIdAsync(string receivingId);

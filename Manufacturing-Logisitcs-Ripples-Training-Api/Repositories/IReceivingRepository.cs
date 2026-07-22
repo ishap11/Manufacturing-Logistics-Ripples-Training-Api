@@ -8,6 +8,8 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories
     {
         Task<IEnumerable<DC>> GetWarehousesAsync();
         Task<IEnumerable<Shipment>> GetShipmentsAsync();
+        Task<IEnumerable<Product>> GetProductsAsync();
+        Task<IEnumerable<Catalog>> GetCatalogsByTypeAsync(string type);
         Task<IEnumerable<DcReceiving>> GetAllReceivingAsync();
         Task<DcReceiving?> GetReceivingByIdAsync(long id);
         Task<DC?> FindDcByNameOrIdAsync(string warehouseStr);
@@ -16,6 +18,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories
         Task<Catalog?> FindCatalogUomAsync(string uom);
         Task<Catalog?> FindCatalogTypeAndKeyAsync(string catalogType, string catalogKey);
         Task<Product?> FindProductByNameAsync(string name);
+        Task<Product?> FindProductByIdAsync(long id);
         Task<ShipmentItem?> FindShipmentItemForProductAsync(long shipmentId, long productId);
         Task<long> GetNextReceivingIdAsync();
         Task<long> GetNextReceivingItemIdAsync();

@@ -38,6 +38,36 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementati
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Product>> GetProductsAsync()
+        {
+            return await _context.Products
+                .Where(p => p.ProductName != null)
+                .OrderBy(p => p.ProductIdPk)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Catalog>> GetCatalogsByTypeAsync(string type)
+        {
+            var typeLower = type.ToLower();
+            // Support multiple naming conventions for the same catalog type
+            var typeVariants = new List<string> { typeLower };
+
+            // Add common variants
+            if (typeLower == "receivingstatus" || typeLower == "status")
+            {
+                typeVariants = new List<string> { "receivingstatus", "status", "receiving_status", "receiving status" };
+            }
+            else if (typeLower == "qcstatus" || typeLower == "qc_status")
+            {
+                typeVariants = new List<string> { "qcstatus", "qc_status", "qc status", "qc" };
+            }
+
+            return await _context.Catalogs
+                .Where(c => c.CatalogType != null && typeVariants.Contains(c.CatalogType.ToLower()))
+                .OrderBy(c => c.CatalogKey)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<DcReceiving>> GetAllReceivingAsync()
         {
             return await _context.DcReceivings
@@ -113,6 +143,11 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Repositories.Implementati
         public async Task<Product?> FindProductByNameAsync(string name)
         {
             return await _context.Products.FirstOrDefaultAsync(p => p.ProductName == name);
+        }
+
+        public async Task<Product?> FindProductByIdAsync(long id)
+        {
+            return await _context.Products.FirstOrDefaultAsync(p => p.ProductIdPk == id);
         }
 
         public async Task<ShipmentItem?> FindShipmentItemForProductAsync(long shipmentId, long productId)
