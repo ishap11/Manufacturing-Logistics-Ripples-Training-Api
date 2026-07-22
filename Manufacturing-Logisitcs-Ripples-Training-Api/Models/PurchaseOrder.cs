@@ -16,6 +16,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Models
         public long? CreatedByUserIdFk { get; set; }
         public long? UpdatedByUserIdFk { get; set; }
 
+        public virtual ICollection<PurchaseOrderItem> PurchaseOrderItems { get; set; } = new List<PurchaseOrderItem>();
         public virtual Suppliers? Supplier { get; set; }
         public virtual Catalog? OrderStatus { get; set; }
         public virtual Catalog? Currency { get; set; }

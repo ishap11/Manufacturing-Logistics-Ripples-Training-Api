@@ -316,27 +316,34 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Models
             // SupplierProductRate
             modelBuilder.Entity<SupplierProductRate>(entity =>
             {
+                entity.HasKey(e => e.SupplierProductRateIdPk).HasName("PK__Supplier__E9B547A24B941FF3");
+
                 entity.ToTable("Supplier_Product_Rate");
-                entity.HasKey(e => e.SupplierProductRateIdPk);
-                entity.Property(e => e.SupplierProductRateIdPk).HasColumnName("Supplier_Product_Rate_ID_Pk");
-                entity.Property(e => e.SupplierIdFk).HasColumnName("Supplier_ID_Fk");
-                entity.Property(e => e.ProductIdFk).HasColumnName("Product_ID_Fk");
-                entity.Property(e => e.BaseRate).HasColumnName("Base_Rate").HasColumnType("decimal(10, 2)");
-                entity.Property(e => e.SupplyingQuantity).HasColumnName("Supplying_Quantity").HasColumnType("decimal(10, 2)");
-                entity.Property(e => e.EffectiveFrom).HasColumnName("Effective_From");
-                entity.Property(e => e.EffectiveTo).HasColumnName("Effective_To");
-                entity.Property(e => e.CreatedDateTime).HasColumnName("Created_DateTime");
-                entity.Property(e => e.UpdatedDateTime).HasColumnName("Updated_DateTime");
+
+                entity.Property(e => e.SupplierProductRateIdPk)
+                    .ValueGeneratedNever()
+                    .HasColumnName("Supplier_Product_Rate_ID_Pk");
+                entity.Property(e => e.BaseRate)
+                    .HasColumnType("decimal(10, 2)")
+                    .HasColumnName("Base_Rate");
                 entity.Property(e => e.CreatedByUserIdFk).HasColumnName("Created_By_User_Id_Fk");
+                entity.Property(e => e.CreatedDateTime)
+                    .HasColumnType("datetime")
+                    .HasColumnName("Created_DateTime");
+                entity.Property(e => e.EffectiveFrom)
+                    .HasColumnType("datetime")
+                    .HasColumnName("Effective_From");
+                entity.Property(e => e.EffectiveTo)
+                    .HasColumnType("datetime")
+                    .HasColumnName("Effective_To");
+                entity.Property(e => e.ProductSupplierIdFk).HasColumnName("Product_Supplier_ID_Fk");
+                entity.Property(e => e.SupplyingQuantity)
+                    .HasColumnType("decimal(10, 2)")
+                    .HasColumnName("Supplying_Quantity");
                 entity.Property(e => e.UpdatedByUserIdFk).HasColumnName("Updated_By_User_Id_Fk");
-
-                entity.HasOne(d => d.Supplier)
-                    .WithMany()
-                    .HasForeignKey(d => d.SupplierIdFk);
-
-                entity.HasOne(d => d.Product)
-                    .WithMany()
-                    .HasForeignKey(d => d.ProductIdFk);
+                entity.Property(e => e.UpdatedDateTime)
+                    .HasColumnType("datetime")
+                    .HasColumnName("Updated_DateTime");
             });
 
             // ProductSupplierMapping
@@ -449,21 +456,30 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Models
             // PurchaseOrderItem
             modelBuilder.Entity<PurchaseOrderItem>(entity =>
             {
-                entity.ToTable("Purchase_Order_Items");
-                entity.HasKey(e => e.POItemIdPk);
-                entity.Property(e => e.POItemIdPk).HasColumnName("PO_Item_Id_PK");
-                entity.Property(e => e.PurchaseOrderIdFk).HasColumnName("Purchase_Order_Id_FK");
-                entity.Property(e => e.ProductIdFk).HasColumnName("Product_Id_FK");
-                entity.Property(e => e.PurchaseQuantity).HasColumnName("Purchase_Quantity");
-                entity.Property(e => e.UnitPrice).HasColumnName("Unit_Price").HasColumnType("decimal(10, 2)");
-                entity.Property(e => e.CreatedDateTime).HasColumnName("Created_DateTime");
-                entity.Property(e => e.UpdatedDateTime).HasColumnName("Updated_DateTime");
-                entity.Property(e => e.CreatedByUserIdFk).HasColumnName("Created_By_User_Id_Fk");
-                entity.Property(e => e.UpdatedByUserIdFk).HasColumnName("Updated_By_User_Id_Fk");
+                entity.HasKey(e => e.PoItemIdPk).HasName("PK__Purchase__3F88059D52B5F42F");
 
-                entity.HasOne(d => d.Product)
-                    .WithMany()
-                    .HasForeignKey(d => d.ProductIdFk);
+                entity.ToTable("Purchase_Order_Items");
+
+                entity.Property(e => e.PoItemIdPk)
+                    .ValueGeneratedNever()
+                    .HasColumnName("PO_Item_Id_PK");
+                entity.Property(e => e.CreatedByUserIdFk).HasColumnName("Created_By_User_Id_Fk");
+                entity.Property(e => e.CreatedDateTime)
+                    .HasColumnType("datetime")
+                    .HasColumnName("Created_DateTime");
+                entity.Property(e => e.ProductSupplierIdFk).HasColumnName("Product_Supplier_Id_FK");
+                entity.Property(e => e.PurchaseOrderIdFk).HasColumnName("Purchase_Order_Id_FK");
+                entity.Property(e => e.PurchaseQuantity).HasColumnName("Purchase_Quantity");
+                entity.Property(e => e.UnitPrice)
+                    .HasColumnType("decimal(10, 2)")
+                    .HasColumnName("Unit_Price");
+                entity.Property(e => e.UpdatedByUserIdFk).HasColumnName("Updated_By_User_Id_Fk");
+                entity.Property(e => e.UpdatedDateTime)
+                    .HasColumnType("datetime")
+                    .HasColumnName("Updated_DateTime");
+                entity.HasOne(d => d.PurchaseOrder)
+      .WithMany(p => p.PurchaseOrderItems)
+      .HasForeignKey(d => d.PurchaseOrderIdFk);
             });
 
             // Carriers

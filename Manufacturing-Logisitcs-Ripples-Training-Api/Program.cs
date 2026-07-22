@@ -12,11 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<ManufacturingLogisticsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IReceivingRepository, ReceivingRepository>();
 builder.Services.AddScoped<IReceivingService, ReceivingService>();
-builder.Services.AddDbContext<ManufacturingLogisticsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<
@@ -30,9 +29,12 @@ builder.Services.AddScoped<DispatchFacade>();
 builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<SupplierFacade>();
+//builder.Services.AddScoped<IReceivingRepository, ReceivingRepository>();
+//builder.Services.AddScoped<IReceivingService, ReceivingService>();
+builder.Services.AddScoped<ProcurementOrderManagementService>();
+builder.Services.AddScoped<ProcurementOrderManagementFacade>();
 
 builder.Services.AddCors(options =>
-{
     options.AddPolicy("AllowAngular", policy =>
     {
         policy.WithOrigins("http://localhost:4200", "http://localhost:4201")

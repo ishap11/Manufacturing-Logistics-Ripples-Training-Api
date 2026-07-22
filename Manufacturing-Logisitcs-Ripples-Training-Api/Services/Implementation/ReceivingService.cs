@@ -9,8 +9,8 @@ using Manufacturing_Logisitcs_Ripples_Training_Api.GlobalExceptions;
 
 namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
 {
-    public class ReceivingService : IReceivingService
-    {
+    public class ReceivingService// : IReceivingService
+    {/*
         private readonly IReceivingRepository _repository;
 
         public ReceivingService(IReceivingRepository repository)
