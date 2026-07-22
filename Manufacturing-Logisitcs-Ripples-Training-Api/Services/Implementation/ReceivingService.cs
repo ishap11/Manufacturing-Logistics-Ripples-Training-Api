@@ -80,20 +80,50 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
         public async Task<IEnumerable<ShipmentDto>> GetShipmentsAsync()
         {
             var shipments = await _repository.GetShipmentsAsync();
-            return shipments.Select(s => new ShipmentDto
+            var allReceivings = await _repository.GetAllReceivingAsync();
+
+            var list = new List<ShipmentDto>();
+            foreach (var s in shipments)
             {
-                Id = s.ShipmentIdPk,
-                ShipmentId = s.TrackingNumber ?? $"SHP-{s.ShipmentIdPk:D4}",
-                Products = s.ShipmentItems
-                    .Where(si => si.POItem != null && si.POItem.Product != null)
-                    .Select(si => new ShipmentProductDto
+                var productsList = new List<ShipmentProductDto>();
+                foreach (var si in s.ShipmentItems.Where(si => si.POItem != null && si.POItem.Product != null))
+                {
+                    long prodId = si.POItem!.Product!.ProductIdPk;
+                    int shippedQty = (int)si.ShippedQuantity;
+
+                    // Calculate total accepted quantity in previous receiving logs for this shipment
+                    int totalAccepted = allReceivings
+                        .Where(r => r.ShipmentIdFk == s.ShipmentIdPk && 
+                                    r.ReceivingStatus?.CatalogKey?.ToUpper() != "CANCELLED")
+                        .SelectMany(r => r.DcReceivingItems)
+                        .Where(ri => ri.ProductIdFk == prodId)
+                        .Sum(ri => ri.AcceptedQuantity);
+
+                    int pendingQty = shippedQty - totalAccepted;
+                    if (pendingQty > 0)
                     {
-                        Id = si.POItem!.Product!.ProductIdPk,
-                        ProductId = $"PRD-{si.POItem.Product.ProductIdPk:D3}",
-                        ProductName = si.POItem.Product.ProductName ?? "Unknown Product",
-                        OrderedQty = (int)si.ShippedQuantity
-                    }).ToList()
-            });
+                        productsList.Add(new ShipmentProductDto
+                        {
+                            Id = prodId,
+                            ProductId = $"PRD-{prodId:D3}",
+                            ProductName = si.POItem.Product.ProductName ?? "Unknown Product",
+                            OrderedQty = pendingQty
+                        });
+                    }
+                }
+
+                if (productsList.Count > 0)
+                {
+                    list.Add(new ShipmentDto
+                    {
+                        Id = s.ShipmentIdPk,
+                        ShipmentId = s.TrackingNumber ?? $"SHP-{s.ShipmentIdPk:D4}",
+                        Products = productsList
+                    });
+                }
+            }
+
+            return list;
         }
 
         public async Task<IEnumerable<AvailableProductDto>> GetProductsAsync()
@@ -191,7 +221,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
                 int acceptedQty = 0;
                 if (itemDto.QcStatus == "Passed")
                 {
-                    acceptedQty = itemDto.ReceivedQty - itemDto.DamagedQty;
+                    acceptedQty = itemDto.ReceivedQty;
                 }
 
                 var itemModel = new DcReceivingItem
@@ -242,7 +272,7 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
                 int acceptedQty = 0;
                 if (itemDto.QcStatus == "Passed")
                 {
-                    acceptedQty = itemDto.ReceivedQty - itemDto.DamagedQty;
+                    acceptedQty = itemDto.ReceivedQty;
                 }
 
                 var itemModel = new DcReceivingItem
@@ -297,16 +327,13 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
             foreach (var ri in r.DcReceivingItems)
             {
                 string qc = "Pending";
-                if (ri.ReceivedQuantity > 0)
+                if (ri.AcceptedQuantity > 0)
                 {
-                    if (ri.AcceptedQuantity == (ri.ReceivedQuantity - (ri.DamagedQuantity ?? 0)))
-                    {
-                        qc = "Passed";
-                    }
-                    else if (ri.AcceptedQuantity == 0)
-                    {
-                        qc = "Failed";
-                    }
+                    qc = "Passed";
+                }
+                else if (ri.ReceivedQuantity > 0 || (ri.DamagedQuantity ?? 0) > 0)
+                {
+                    qc = "Failed";
                 }
 
                 int orderedQty = 0;
@@ -481,13 +508,9 @@ namespace Manufacturing_Logisitcs_Ripples_Training_Api.Services.Implementation
                 {
                     throw new GlobalException($"Damaged quantity for product '{productIdentifier}' cannot be negative.");
                 }
-                if (item.DamagedQty > item.ReceivedQty)
+                if (item.ReceivedQty + item.DamagedQty != item.OrderedQty)
                 {
-                    throw new GlobalException($"Damaged quantity ({item.DamagedQty}) cannot exceed received quantity ({item.ReceivedQty}) for product '{productIdentifier}'.");
-                }
-                if (item.ReceivedQty > item.OrderedQty)
-                {
-                    throw new GlobalException($"Received quantity ({item.ReceivedQty}) cannot exceed ordered quantity ({item.OrderedQty}) for product '{productIdentifier}'.");
+                    throw new GlobalException($"Total received and damaged quantity ({item.ReceivedQty + item.DamagedQty}) must match the ordered quantity ({item.OrderedQty}) for product '{productIdentifier}'.");
                 }
             }
         }
