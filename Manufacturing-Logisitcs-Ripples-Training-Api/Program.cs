@@ -27,24 +27,20 @@ builder.Services.AddScoped<DispatchService>();
 
 builder.Services.AddScoped<DispatchFacade>();
 
+builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<SupplierFacade>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins("http://localhost:4200", "http://localhost:4201")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-/*
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy => policy.WithOrigins("http://localhost:4200", "http://localhost:4201")
-                        .AllowAnyMethod()
-                        .AllowAnyHeader());
-});*/
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -62,8 +58,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowFrontend");
 
 app.UseCors("AllowAngular");
 
